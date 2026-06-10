@@ -4,477 +4,117 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZBZB Teleport Trainer</title>
-
 <style>
-
-body{
-    background:#1b1b1b;
-    color:white;
-    font-family:sans-serif;
-    text-align:center;
-    margin:0;
-    padding:30px;
-}
-
-h1{
-    margin-bottom:20px;
-}
-
-#question{
-    font-size:32px;
-    margin-bottom:30px;
-}
-
-.board{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(5,70px);
-
-    grid-template-rows:
-        repeat(5,70px);
-
-    gap:14px;
-
-    justify-content:center;
-}
-
-.cell{
-
-    width:70px;
-    height:70px;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    border:2px solid #666;
-    border-radius:50%;
-
-    background:#2b2b2b;
-
-    cursor:pointer;
-
-    user-select:none;
-
-    font-size:38px;
-
-    transition:.15s;
-}
-
-.cell:hover{
-
-    background:#3a3a3a;
-    transform:scale(1.05);
-}
-
-.empty{
-    border:none;
-    background:transparent;
-    cursor:default;
-}
-
-.selected{
-
-    background:#1976d2;
-}
-
-.correct{
-
-    background:#2e7d32;
-}
-
-.wrong{
-
-    background:#c62828;
-}
-
-#stats{
-
-    margin-top:25px;
-    font-size:20px;
-}
-
+body{background:#1b1b1b;color:white;font-family:sans-serif;text-align:center;padding:30px}
+#question{font-size:32px;margin-bottom:10px}
+#timer{font-size:48px;color:#ffb74d;min-height:60px;margin-bottom:20px}
+.board{display:grid;grid-template-columns:repeat(5,70px);grid-template-rows:repeat(5,70px);gap:14px;justify-content:center}
+.cell{width:70px;height:70px;display:flex;justify-content:center;align-items:center;border:2px solid #666;border-radius:50%;background:#2b2b2b;cursor:pointer;font-size:38px}
+.empty{border:none;background:transparent;cursor:default}
+.selected{background:#1976d2}.correct{background:#2e7d32}.wrong{background:#c62828}
 </style>
 </head>
 <body>
-
 <h1>ZBZB Teleport Trainer</h1>
-
 <div id="question"></div>
-
+<div id="timer"></div>
 <div id="board" class="board"></div>
-
-<div id="stats">
-
-    正解：
-    <span id="correctCount">0</span>
-
-    &nbsp;&nbsp;
-
-    ミス：
-    <span id="missCount">0</span>
-
-</div>
+<div style="margin-top:20px">正解: <span id="correctCount">0</span>　Miss: <span id="missCount">0</span></div>
 
 <script>
-
-const board =
-document.getElementById("board");
-
-const layout = [
-
-    [6,10,11,14,12],
-    [7,null,null,null,0],
-    [13,null,null,null,2],
-    [15,null,null,null,8],
-    [3,1,4,5,9]
-
+const layout=[[6,10,11,14,12],[7,null,null,null,0],[13,null,null,null,2],[15,null,null,null,8],[3,1,4,5,9]];
+const arrows={0:"↓",1:"←",2:"↓",3:"↑",4:"←",5:"←",6:"→",7:"↑",8:"↓",9:"←",10:"→",11:"→",12:"↓",13:"↑",14:"→",15:"↑"};
+const questions=[
+{hand:[{num:6,dir:"↓"},{num:9,dir:"↓"}],answer:[0,2]},
+{hand:[{num:9,dir:"↓"},{num:6,dir:"↓"}],answer:[0,2]},
+{hand:[{num:6,dir:"←"},{num:9,dir:"↑"}],answer:[1,3]},
+{hand:[{num:9,dir:"←"},{num:6,dir:"↑"}],answer:[3,1]},
+{hand:[{num:6,dir:"←"},{num:9,dir:"←"}],answer:[4,5]},
+{hand:[{num:9,dir:"←"},{num:6,dir:"←"}],answer:[4,5]},
+{hand:[{num:6,dir:"↑"},{num:9,dir:"→"}],answer:[7,6]},
+{hand:[{num:9,dir:"↑"},{num:6,dir:"→"}],answer:[6,7]},
+{hand:[{num:6,dir:"→"},{num:9,dir:"→"}],answer:[10,11]},
+{hand:[{num:9,dir:"→"},{num:6,dir:"→"}],answer:[10,11]},
+{hand:[{num:6,dir:"↓"},{num:9,dir:"←"}],answer:[8,9]},
+{hand:[{num:9,dir:"↓"},{num:6,dir:"←"}],answer:[9,8]},
+{hand:[{num:6,dir:"↑"},{num:9,dir:"↑"}],answer:[13,15]},
+{hand:[{num:9,dir:"↑"},{num:6,dir:"↑"}],answer:[13,15]},
+{hand:[{num:6,dir:"→"},{num:9,dir:"↓"}],answer:[14,12]},
+{hand:[{num:9,dir:"→"},{num:6,dir:"↓"}],answer:[12,14]}
 ];
 
-const arrows = {
-
-    0:"↓",
-    1:"←",
-    2:"↓",
-    3:"↑",
-
-    4:"←",
-    5:"←",
-    6:"→",
-    7:"↑",
-
-    8:"↓",
-    9:"←",
-    10:"→",
-    11:"→",
-
-    12:"↓",
-    13:"↑",
-    14:"→",
-    15:"↑"
-};
-
-const questions = [
-
-{
-    hand:[
-        {num:6,dir:"↓"},
-        {num:9,dir:"↓"}
-    ],
-    answer:[0,2]
-},
-
-{
-    hand:[
-        {num:9,dir:"↓"},
-        {num:6,dir:"↓"}
-    ],
-    answer:[0,2]
-},
-
-{
-    hand:[
-        {num:6,dir:"←"},
-        {num:9,dir:"↑"}
-    ],
-    answer:[1,3]
-},
-
-{
-    hand:[
-        {num:9,dir:"←"},
-        {num:6,dir:"↑"}
-    ],
-    answer:[3,1]
-},
-
-{
-    hand:[
-        {num:6,dir:"←"},
-        {num:9,dir:"←"}
-    ],
-    answer:[4,5]
-},
-
-{
-    hand:[
-        {num:9,dir:"←"},
-        {num:6,dir:"←"}
-    ],
-    answer:[4,5]
-},
-
-{
-    hand:[
-        {num:6,dir:"↑"},
-        {num:9,dir:"→"}
-    ],
-    answer:[7,6]
-},
-
-{
-    hand:[
-        {num:9,dir:"↑"},
-        {num:6,dir:"→"}
-    ],
-    answer:[6,7]
-},
-
-{
-    hand:[
-        {num:6,dir:"→"},
-        {num:9,dir:"→"}
-    ],
-    answer:[10,11]
-},
-
-{
-    hand:[
-        {num:9,dir:"→"},
-        {num:6,dir:"→"}
-    ],
-    answer:[10,11]
-},
-
-{
-    hand:[
-        {num:6,dir:"↓"},
-        {num:9,dir:"←"}
-    ],
-    answer:[8,9]
-},
-
-{
-    hand:[
-        {num:9,dir:"↓"},
-        {num:6,dir:"←"}
-    ],
-    answer:[9,8]
-},
-
-{
-    hand:[
-        {num:6,dir:"↑"},
-        {num:9,dir:"↑"}
-    ],
-    answer:[13,15]
-},
-
-{
-    hand:[
-        {num:9,dir:"↑"},
-        {num:6,dir:"↑"}
-    ],
-    answer:[13,15]
-},
-
-{
-    hand:[
-        {num:6,dir:"→"},
-        {num:9,dir:"↓"}
-    ],
-    answer:[14,12]
-},
-
-{
-    hand:[
-        {num:9,dir:"→"},
-        {num:6,dir:"↓"}
-    ],
-    answer:[12,14]
-}
-
-];
-
-let currentQuestion;
-let selected = [];
-
-let correctCount = 0;
-let missCount = 0;
-
-let cellMap = {};
+const board=document.getElementById("board");
+let cellMap={},selected=[],currentQuestion,countdownInterval;
+let correctCount=0,missCount=0;
 
 function createBoard(){
-
-    board.innerHTML = "";
-    cellMap = {};
-
-    layout.forEach(row=>{
-
-        row.forEach(index=>{
-
-            const div =
-                document.createElement("div");
-
-            if(index === null){
-
-                div.className =
-                    "cell empty";
-
-                board.appendChild(div);
-                return;
-            }
-
-            div.className = "cell";
-
-            div.textContent =
-                arrows[index];
-
-            div.dataset.index =
-                index;
-
-            cellMap[index] = div;
-
-            div.addEventListener(
-                "click",
-                ()=>select(index)
-            );
-
-            board.appendChild(div);
-
-        });
-
-    });
+ board.innerHTML=""; cellMap={};
+ layout.forEach(r=>r.forEach(i=>{
+   const d=document.createElement("div");
+   if(i===null){d.className="cell empty"; board.appendChild(d); return;}
+   d.className="cell"; d.dataset.index=i; d.textContent="?";
+   d.onclick=()=>select(i);
+   cellMap[i]=d; board.appendChild(d);
+ }));
 }
 
 function select(index){
-
-    if(selected.includes(index))
-        return;
-
-    if(selected.length >= 2)
-        return;
-
-    selected.push(index);
-
-    cellMap[index]
-        .classList
-        .add("selected");
-
-    if(selected.length === 2){
-
-        setTimeout(
-            checkAnswer,
-            150
-        );
-    }
+ if(selected.includes(index)||selected.length>=2) return;
+ selected.push(index);
+ cellMap[index].classList.add("selected");
+ if(selected.length===2) setTimeout(checkAnswer,150);
 }
 
 function checkAnswer(){
-
-    const sameDirection =
-
-        currentQuestion.hand[0].dir ===
-        currentQuestion.hand[1].dir;
-
-    let correct = false;
-
-    if(sameDirection){
-
-        const a =
-            [...selected]
-            .sort((x,y)=>x-y);
-
-        const b =
-            [...currentQuestion.answer]
-            .sort((x,y)=>x-y);
-
-        correct =
-            a.every(
-                (v,i)=>v===b[i]
-            );
-
-    }else{
-
-        correct =
-            selected[0] === currentQuestion.answer[0] &&
-            selected[1] === currentQuestion.answer[1];
-    }
-
-    selected.forEach(i=>{
-
-        cellMap[i]
-            .classList
-            .remove("selected");
-
-        cellMap[i]
-            .classList
-            .add(
-                correct
-                ? "correct"
-                : "wrong"
-            );
-    });
-
-    if(correct){
-
-        correctCount++;
-
-        document
-            .getElementById(
-                "correctCount"
-            )
-            .textContent =
-            correctCount;
-
-    }else{
-
-        missCount++;
-
-        document
-            .getElementById(
-                "missCount"
-            )
-            .textContent =
-            missCount;
-    }
-
-    setTimeout(
-        nextQuestion,
-        700
-    );
+ const same=currentQuestion.hand[0].dir===currentQuestion.hand[1].dir;
+ let correct=false;
+ if(same){
+   const a=[...selected].sort((a,b)=>a-b);
+   const b=[...currentQuestion.answer].sort((a,b)=>a-b);
+   correct=JSON.stringify(a)===JSON.stringify(b);
+ }else{
+   correct=selected[0]===currentQuestion.answer[0]&&selected[1]===currentQuestion.answer[1];
+ }
+ selected.forEach(i=>{
+   cellMap[i].classList.remove("selected");
+   cellMap[i].classList.add(correct?"correct":"wrong");
+ });
+ if(correct){
+   document.getElementById("correctCount").textContent=++correctCount;
+ }else{
+   document.getElementById("missCount").textContent=++missCount;
+ }
+ setTimeout(nextQuestion,1000);
 }
 
 function nextQuestion(){
+ clearInterval(countdownInterval);
+ Object.values(cellMap).forEach(c=>c.classList.remove("selected","correct","wrong"));
+ selected=[];
+ currentQuestion=questions[Math.floor(Math.random()*questions.length)];
+ document.getElementById("question").innerHTML=`[${currentQuestion.hand[0].dir}] ${currentQuestion.hand[0].num} &nbsp;&nbsp;&nbsp; [${currentQuestion.hand[1].dir}] ${currentQuestion.hand[1].num}`;
 
-    Object.values(cellMap)
-        .forEach(cell=>{
+ Object.values(cellMap).forEach(c=>c.textContent="?");
 
-            cell.classList.remove(
-                "selected",
-                "correct",
-                "wrong"
-            );
-        });
+ let remain=6;
+ const timer=document.getElementById("timer");
+ timer.textContent=remain;
 
-    selected = [];
-
-    currentQuestion =
-
-        questions[
-            Math.floor(
-                Math.random() *
-                questions.length
-            )
-        ];
-
-    document
-        .getElementById(
-            "question"
-        )
-        .innerHTML =
-
-        `[${currentQuestion.hand[0].dir}] ${currentQuestion.hand[0].num}
-        &nbsp;&nbsp;&nbsp;
-        [${currentQuestion.hand[1].dir}] ${currentQuestion.hand[1].num}`;
+ countdownInterval=setInterval(()=>{
+   remain--;
+   if(remain>0){
+      timer.textContent=remain;
+   }else{
+      clearInterval(countdownInterval);
+      timer.textContent="GO!";
+      Object.entries(cellMap).forEach(([i,c])=>c.textContent=arrows[i]);
+      setTimeout(()=>timer.textContent="",800);
+   }
+ },1000);
 }
 
 createBoard();
 nextQuestion();
-
 </script>
-
 </body>
 </html>
